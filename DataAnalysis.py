@@ -12,6 +12,15 @@ conn = Database.conn
 cursor = Database.cursor
 
 
+def founddata(npdata: np) -> bool:
+    cont = 0
+    found = False
+    while cont <= 11 and not found:
+        if npdata[cont] > 0:
+            found = True
+    return found
+
+
 def getparameters(optiondate: int, option: int):
     resp = 'Y'
     while resp.upper() == 'Y':
@@ -20,24 +29,44 @@ def getparameters(optiondate: int, option: int):
             if year == '0':
                 return
 
+            npday = np.zeros(12)
+            npquant = np.zeros(12)
+            npvalue = np.zeros(12)
+
             dtini, dtfinal = util.first_last_day(month, year)
 
             regcard: Card = validcard(0)
             regsynd: Syndicate = validsyndicate(0)
 
-            lstdate, lstquant, lstvalue = getdata(dtini, dtfinal, regcard.codeCard, regsynd.codeSynd, 1)
+            # lstdate, lstquant, lstvalue = getdata(dtini, dtfinal, regcard.codeCard, regsynd.codeSynd, 1)
+            npday, npquant, npvalue = getdata(dtini, dtfinal, regcard.codeCard, regsynd.codeSynd, 1)
 
-            x = lstdate
+            if founddata(npday):
+                x = npday   # lstdate
+                ylabel = ''
 
-            if option == 1:
-                y = lstquant
-                plt.bar(x, y, label='QUANT', color='g')
-            elif option == 2:
-                y = lstvalue
-                plt.bar(x, y, label='VALUE', color='b')
+                if option == 1:
+                    y = npquant # lstquant
+                    ylabel = 'Quant'
+#                    plt.bar(x, y, label='QUANT', color='g')
+                    plt.bar(x, y, color='g')
+                elif option == 2:
+                    y = npvalue # lstvalue
+                    ylabel = 'Value'
+#                    plt.bar(x, y, label='VALUE', color='b')
+                    plt.bar(x, y, color='b')
 
-            plt.legend()
-            plt.show()
+                plt.xlabel('Day')
+                plt.ylabel(ylabel)
+                plt.title(str(month) + '/' + str(year))
+                plt.grid(True)
+#                plt.legend()
+#                plt.show()
+                plt.savefig(f'{str(year)}_{str(month):0>2}_{ylabel}.pdf', format='pdf',
+                            transparent=True, bbox_inches='tight')
+                print(f'Report {str(year)}_{str(month):0>2}_{ylabel}.pdf saved')
+            else:
+                return "Don´t have register"
 
         if optiondate == 2:
             year = util.valid_year()
@@ -62,66 +91,81 @@ def processyear(year: int, option: int):
     regcard: Card = validcard(0)
     regsynd: Syndicate = validsyndicate(0)
 
-    lstdate, lstquant, lstvalue = getdata(dtini, dtfinal, regcard.codeCard, regsynd.codeSynd, 2)
+    #    lstdate, lstquant, lstvalue = getdata(dtini, dtfinal, regcard.codeCard, regsynd.codeSynd, 2)
+    npmonth, npquant, npvalue = getdata(dtini, dtfinal, regcard.codeCard, regsynd.codeSynd, 2)
 
-    if len(lstdate) > 0:
-        dct = {'month': lstdate, 'quant': lstquant, 'value': lstvalue}
+    #if len(lstdate) > 0:
+    if founddata(npmonth):
+        # dct = {'month': lstdate, 'quant': lstquant, 'value': lstvalue}
+        dct = {'month': npmonth, 'quant': npquant, 'value': npvalue}
 
         frame = DataFrame(dct)
-
+        # group by from pandas is slower than group by from database
         if option == 1:
             frame.groupby(by='month')['quant'].mean()
         else:
             frame.groupby(by='month')['value'].mean()
 
-    #    countmonth = 0
-    #    totquant = 0
-    #    totvalue = 0
-    #    month = 0
-    #
-    #    for count in range(1, len(lstdate)):
-    #        monthactual = lstdate[count]
-    #        if month == 0:   # first time
-    #            month = monthactual
-    #        if month != monthactual:
-    #            npmonth[month - 1] = month
-    #            npquant[month - 1] = round(totquant / countmonth)
-    #            npvalue[month - 1] = round(totvalue / countmonth)
-    #
-    #            month = monthactual
-    #
-    #            countmonth = 0
-    #            totquant = 0
-    #            totvalue = 0
-    #
-    #        countmonth += 1
-    #        totquant += lstquant[count]
-    #        totvalue += lstvalue[count]
-    #
-    #    npmonth[month - 1] = month
-    #    npquant[month - 1] = round(totquant / countmonth)
-    #    npvalue[month - 1] = round(totvalue / countmonth)
-    #
-    #    x = npmonth
-    #
-    #    if option == 1:
-    #        y = npquant
-    #        plt.bar(x, y, label='QUANT', color='g')
-    #    elif option == 2:
-    #        y = npvalue
-    #        plt.bar(x, y, label='VALUE', color='b')
+        #    countmonth = 0
+        #    totquant = 0
+        #    totvalue = 0
+        #    month = 0
+        #
+        #    for count in range(1, len(lstdate)):
+        #        monthactual = lstdate[count]
+        #        if month == 0:   # first time
+        #            month = monthactual
+        #        if month != monthactual:
+        #            npmonth[month - 1] = month
+        #            npquant[month - 1] = round(totquant / countmonth)
+        #            npvalue[month - 1] = round(totvalue / countmonth)
+        #
+        #            month = monthactual
+        #
+        #            countmonth = 0
+        #            totquant = 0
+        #            totvalue = 0
+        #
+        #        countmonth += 1
+        #        totquant += lstquant[count]
+        #        totvalue += lstvalue[count]
+        #
+        #    npmonth[month - 1] = month
+        #    npquant[month - 1] = round(totquant / countmonth)
+        #    npvalue[month - 1] = round(totvalue / countmonth)
+        #
+        #    x = npmonth
+        #
+        #    if option == 1:
+        #        y = npquant
+        #        plt.bar(x, y, label='QUANT', color='g')
+        #    elif option == 2:
+        #        y = npvalue
+        #        plt.bar(x, y, label='VALUE', color='b')
 
         x = frame['month']
+        ylabel = ''
 
         if option == 1:
             y = frame['quant']
-            plt.bar(x, y, label='QUANT', color='g')
+            ylabel = 'Quant'
+#            plt.bar(x, y, label='QUANT', color='g')
+            plt.bar(x, y, color='g')
         elif option == 2:
             y = frame['value']
-            plt.bar(x, y, label='VALUE', color='b')
+            ylabel = 'Value'
+#            plt.bar(x, y, label='VALUE', color='b')
+            plt.bar(x, y,  color='b')
 
-        plt.legend()
-        plt.show()
+        plt.xlabel('Month')
+        plt.ylabel(ylabel)
+        plt.title(str(year))
+        plt.grid(True)
+#        plt.legend()
+#        plt.show()
+        plt.savefig(f'{str(year)}_{ylabel}.pdf', format='pdf', transparent=True,
+                    bbox_inches='tight')
+        print(f'Report {str(year)}_{ylabel}.pdf saved')
     else:
         return "Don´t have register"
 

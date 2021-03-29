@@ -11,6 +11,7 @@ def str_to_date(dt: str) -> date:
 
 
 def inform_code(obj: str) -> int:
+    code = '0'
     codeok = False
     while not codeok:
         code = input(f'Code {obj} (0 - exit): ').strip()
@@ -19,7 +20,7 @@ def inform_code(obj: str) -> int:
             return 0
 
         try:
-            int(code)
+            code = int(code)
             codeok = True
         except:
             print(f'\33[1;31mCode {obj} should be numeric\33[m')
@@ -46,16 +47,18 @@ def date_valid(data) -> bool:
 
 
 def valid_year() -> int:
+    year = '0'
     yearok = False
     while not yearok:
         year = input('Year (0 - exit): ').strip()
+
+        if year == '0':
+            return 0
         try:
             year = int(year)
         except:
             print('\33[1;31mShould be numeric\33[m')
             continue
-        if year == 0:
-            return 0
         if year < 2020:
             print('\33[1;31mYear less than limit\33[m')
         elif year > date.today().year:
@@ -66,16 +69,18 @@ def valid_year() -> int:
 
 
 def valid_month_year() -> tuple:
+    month = '0'
     monthok = False
     while not monthok:
         month = input('Month (0 - exit): ').strip()
+
+        if month == '0':
+            return 0, 0
         try:
             month = int(month)
         except:
             print('\33[1;31mShould be numeric\33[m')
             continue
-        if month == 0:
-            return 0, 0
         if month >= 13:
             print('\33[1;31mInvalid month\33[m')
         else:
@@ -90,9 +95,12 @@ def first_last_day(month: int, year: int) -> tuple:
     # put 0 on left
     if month < 10:
         monthstr = str('0' + str(month))
+    else:
+        monthstr = str(month)
 
     dtini: str = str(year) + '-' + monthstr + '-01'
     dtfinal: str = date(year, month, 1)
+
     # add 1 to month
     dtfinal = dtfinal + relativedelta(months=1)
     # take the last day of the month
