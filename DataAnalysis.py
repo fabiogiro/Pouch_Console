@@ -18,6 +18,7 @@ def founddata(npdata: np) -> bool:
     while cont <= 11 and not found:
         if npdata[cont] > 0:
             found = True
+        cont += 1
     return found
 
 
@@ -28,10 +29,6 @@ def getparameters(optiondate: int, option: int):
             month, year = util.valid_month_year()
             if year == '0':
                 return
-
-            npday = np.zeros(12)
-            npquant = np.zeros(12)
-            npvalue = np.zeros(12)
 
             dtini, dtfinal = util.first_last_day(month, year)
 
@@ -58,7 +55,7 @@ def getparameters(optiondate: int, option: int):
 
                 plt.xlabel('Day')
                 plt.ylabel(ylabel)
-                plt.title(str(month) + '/' + str(year))
+                plt.title(f'{str(month):0>2}/{str(year)}')
                 plt.grid(True)
 #                plt.legend()
 #                plt.show()
@@ -81,10 +78,6 @@ def getparameters(optiondate: int, option: int):
 
 
 def processyear(year: int, option: int):
-    npmonth = np.zeros(12)
-    npquant = np.zeros(12)
-    npvalue = np.zeros(12)
-
     dtini = str(year) + '-01-01'
     dtfinal = str(year) + '-12-31'
 
@@ -186,13 +179,41 @@ def getdata(dtini: str , dtfinal: str, codecard: int, codesynd: int, optiondate:
     lstdate = []
     lstquant = []
     lstvalue = []
+
+    month = int(dtini[5:7])
+    year = int(dtini[:4])
+
+    if optiondate == 1:
+        dt1, dt2 = util.first_last_day(month, year)
+        dt2_str = dt2.strftime('%Y-%m-%d')   # convert date to str
+        maxday = int(dt2_str[-2::])
+        # initialize the list
+        for i in range(0, maxday):
+            lstdate.append(0)
+            lstquant.append(0)
+            lstvalue.append(0)
+    elif optiondate == 2:
+        # initialize the list
+        for i in range(0, 366):
+            lstdate.append(0)
+            lstquant.append(0)
+            lstvalue.append(0)
+
+    i = 0
     for reg in cursor.fetchall():
+        daymonth = 0
         if optiondate == 1:
-            lstdate.append(int(reg[0][-2::]))  # day 2020-01-20  -> 20
+            daymonth = int(reg[0][-2::])
+            # lstdate.append(int(reg[0][-2::]))  # day 2020-01-20  -> 20
         elif optiondate == 2:
-            lstdate.append(int(reg[0][5:7]))  # month 2020-01-20  -> 01
-        lstquant.append(reg[1])
-        lstvalue.append(reg[2])
+            daymonth = int(reg[0][5:7])  # month 2020-01-20  -> 01
+            # lstdate.append(int(reg[0][5:7]))  # month 2020-01-20  -> 01
+        lstdate[i] = daymonth
+        lstquant[i] = reg[1]
+        lstvalue[i] = reg[2]
+
+        i += 1
+
     return lstdate, lstquant, lstvalue
 
 
